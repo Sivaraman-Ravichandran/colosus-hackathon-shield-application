@@ -1,22 +1,42 @@
 import { View, StyleSheet, Text, TouchableOpacity, Alert } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import MapboxGl from "@rnmapbox/maps";
 
 MapboxGl.setAccessToken(
   "sk.eyJ1Ijoic2l2YXJhbWFuNyIsImEiOiJjbTBqaXB6c3IwbTRyMmlzYXdhNDE1eXY3In0.zE8Q2Z_e70_nRF_kgvzZUA"
 );
 MapboxGl.setTelemetryEnabled(false);
-
 const MapScreen = () => {
-  // Function to handle the SOS button press
-  const handleSOSPress = () => {
-    // Logic to send SOS alert to the dashboard (for now, it triggers an alert)
-    Alert.alert(
-      "SOS Alert",
-      "An SOS alert has been sent to the control room. Don't Worry, we will be reaching you out."
-    );
+  // Set default location (Bangalore)
+  const [defaultLocation] = useState({
+    latitude: 12.963829,
+    longitude: 77.505777,
+  });
+  // Function to handle the SOS button press and send alert to the control room
+  const handleSOSPress = async () => {
+    try {
+      const response = await fetch("http://192.168.137.227:5000/alert", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: "user123",
+          name: "Jane Doe",
+          latitude: defaultLocation.latitude,
+          longitude: defaultLocation.longitude,
+        }),
+      });
 
-    // Here you can implement the API call or backend integration to send the alert
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert("SOS Alert", "SOS alert sent successfully.");
+      } else {
+        Alert.alert("Error", data.message || "Failed to send SOS alert");
+      }
+    } catch (error) {
+      Alert.alert("Error", "An error occurred: " + error.message);
+    }
   };
 
   return (
@@ -30,19 +50,22 @@ const MapScreen = () => {
       <MapboxGl.MapView
         style={styles.map}
         zoomEnabled={true}
-        styleURL="mapbox://styles/mapbox/satellite-streets-v12"
+        styleURL="mapbox://styles/mapbox/streets-v12"
         rotateEnabled={true}
       >
         <MapboxGl.Camera
           zoomLevel={15}
-          centerCoordinate={[76.949156, 10.936923]}
+          centerCoordinate={[
+            defaultLocation.longitude,
+            defaultLocation.latitude,
+          ]}
           pitch={60}
           animationMode={"flyTo"}
           animationDuration={6000}
         />
         <MapboxGl.PointAnnotation
           id="marker"
-          coordinate={[76.949156, 10.936923]}
+          coordinate={[defaultLocation.longitude, defaultLocation.latitude]}
         >
           <View style={styles.customMarker}>
             <Text style={styles.markerText}>📍</Text>
@@ -52,15 +75,11 @@ const MapScreen = () => {
 
       {/* Footer with controls */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Zoom In</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Zoom Out</Text>
-        </TouchableOpacity>
+        
+
         {/* SOS Button */}
         <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
-          <Text style={styles.sosButtonText}>SOS alert</Text>
+          <Text style={styles.sosButtonText}>Emergency</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -71,19 +90,19 @@ const MapScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5", // Light background to improve contrast
+    backgroundColor: "#f5f5f5",
   },
   map: {
     flex: 1,
-    marginBottom: 0, // Added spacing between the map and the footer
+    marginBottom: 0,
   },
   header: {
     marginTop: 40,
     height: 55,
-    backgroundColor: "#181C14", // Darker green for a more professional look
+    backgroundColor: "#181C14",
     alignItems: "center",
     justifyContent: "center",
-    elevation: 5, // Adds a subtle shadow for a more elevated effect
+    elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
@@ -93,7 +112,7 @@ const styles = StyleSheet.create({
     color: "#3E8E41",
     fontSize: 22,
     fontWeight: "bold",
-    letterSpacing: 1, // Add some spacing between letters
+    letterSpacing: 1,
   },
   customMarker: {
     width: 40,
@@ -114,12 +133,12 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
-    justifyContent: "space-between", // Distribute buttons evenly
+    justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: "#181C14",
     height: 75,
-    paddingHorizontal: 15, // Adjust padding for better alignment
-    paddingVertical: 10, // Add some padding for spacing inside the footer
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     elevation: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -138,34 +157,34 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
-    alignItems: "center", // Center text horizontally
-    justifyContent: "center", // Center text vertically
-    width: 100, // Set fixed width for consistent button sizes
+    alignItems: "center",
+    justifyContent: "center",
+    width: 100,
   },
   buttonText: {
     color: "#3E8E41",
     fontSize: 18,
     fontWeight: "bold",
   },
-  // Redesigned SOS Button
   sosButton: {
-    backgroundColor: "#ff5252", // Softer red for a friendlier but still urgent look
+    backgroundColor: "#ff5252",
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#ff0000", // Border color matches the SOS theme
+    borderColor: "#ff0000",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
+    marginLeft:100
   },
   sosButtonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-    letterSpacing: 1, // Slight spacing for a cleaner look
+    letterSpacing: 1,
   },
 });
 
