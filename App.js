@@ -1,17 +1,22 @@
 import { View, StyleSheet, Text, TouchableOpacity, Alert } from "react-native";
 import React, { useState } from "react";
 import MapboxGl from "@rnmapbox/maps";
-
 MapboxGl.setAccessToken(
   "sk.eyJ1Ijoic2l2YXJhbWFuNyIsImEiOiJjbTBqaXB6c3IwbTRyMmlzYXdhNDE1eXY3In0.zE8Q2Z_e70_nRF_kgvzZUA"
 );
 MapboxGl.setTelemetryEnabled(false);
 const MapScreen = () => {
-  // Set default location (Bangalore)
+  // Set default location (Bangalore) and safe location (safe place)
   const [defaultLocation] = useState({
     latitude: 12.963829,
     longitude: 77.505777,
   });
+  const [safeLocation] = useState({
+    latitude: 13.963829,
+    longitude: 77.505777, // Safe location coordinates
+  });
+  const [currentLocation, setCurrentLocation] = useState(defaultLocation);
+
   // Function to handle the SOS button press and send alert to the control room
   const handleSOSPress = async () => {
     try {
@@ -30,7 +35,10 @@ const MapScreen = () => {
 
       const data = await response.json();
       if (response.ok) {
-        Alert.alert("SOS Alert", "SOS alert sent successfully.");
+        Alert.alert("Emergency", "An alert sent to the control room.");
+
+        // Navigate to the safe location after sending the alert
+        setCurrentLocation(safeLocation);
       } else {
         Alert.alert("Error", data.message || "Failed to send SOS alert");
       }
@@ -56,8 +64,8 @@ const MapScreen = () => {
         <MapboxGl.Camera
           zoomLevel={15}
           centerCoordinate={[
-            defaultLocation.longitude,
-            defaultLocation.latitude,
+            currentLocation.longitude,
+            currentLocation.latitude,
           ]}
           pitch={60}
           animationMode={"flyTo"}
@@ -65,7 +73,7 @@ const MapScreen = () => {
         />
         <MapboxGl.PointAnnotation
           id="marker"
-          coordinate={[defaultLocation.longitude, defaultLocation.latitude]}
+          coordinate={[currentLocation.longitude, currentLocation.latitude]}
         >
           <View style={styles.customMarker}>
             <Text style={styles.markerText}>📍</Text>
@@ -75,8 +83,6 @@ const MapScreen = () => {
 
       {/* Footer with controls */}
       <View style={styles.footer}>
-        
-
         {/* SOS Button */}
         <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
           <Text style={styles.sosButtonText}>Emergency</Text>
@@ -145,27 +151,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
   },
-  button: {
-    backgroundColor: "#ffffff",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#3E8E41",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    alignItems: "center",
-    justifyContent: "center",
-    width: 100,
-  },
-  buttonText: {
-    color: "#3E8E41",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
   sosButton: {
     backgroundColor: "#ff5252",
     paddingVertical: 12,
@@ -178,7 +163,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
-    marginLeft:100
+    marginLeft: 100,
   },
   sosButtonText: {
     color: "#fff",
